@@ -246,6 +246,28 @@ html, body {
   transition: width 0.1s, height 0.1s;
 }
 #scrub-track:hover #scrub-dot { width: 20px; height: 20px; }
+
+.spd-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  border: 1.5px solid rgba(212,168,41,0.35);
+  background: rgba(255,255,255,0.05);
+  color: var(--dim); font-size: 0.8rem; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.13s;
+}
+.spd-btn:hover { background: rgba(212,168,41,0.15); border-color: var(--gold); color: var(--gold); }
+.spd-btn:active { transform: scale(0.9); }
+
+#fs-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: var(--dim); font-size: 1rem; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.13s;
+}
+#fs-btn:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+#fs-btn:active { transform: scale(0.9); }
 </style>
 </head>
 <body>
@@ -318,12 +340,15 @@ html, body {
 
   <div id="bottom-bar">
     <div id="scrub-row">
+      <button class="spd-btn" id="speed-dn-btn">◀◀</button>
       <button id="play-btn">▶</button>
+      <button class="spd-btn" id="speed-up-btn">▶▶</button>
       <span id="time-disp">0:00 / 0:00</span>
       <div id="scrub-track">
         <div id="scrub-fill"></div>
         <div id="scrub-dot"></div>
       </div>
+      <button id="fs-btn">⛶</button>
     </div>
   </div>
 </div>
@@ -763,6 +788,31 @@ tbTog.addEventListener('click', () => {
   toolbar.classList.toggle('col', tbCollapsed);
   tbTog.textContent = tbCollapsed ? '▼ Show' : '▲ Hide';
 });
+
+// ─── Speed buttons ─────────────────────────────────
+$('speed-dn-btn').addEventListener('click', () => setSpeed(speedIdx - 1));
+$('speed-up-btn').addEventListener('click', () => setSpeed(speedIdx + 1));
+
+// ─── Fullscreen ─────────────────────────────────────
+const fsBtn = $('fs-btn');
+
+function toggleFullscreen() {
+  const el = document.documentElement;
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } else {
+    (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+  }
+}
+
+fsBtn.addEventListener('click', toggleFullscreen);
+
+['fullscreenchange', 'webkitfullscreenchange'].forEach(evt =>
+  document.addEventListener(evt, () => {
+    const inFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    fsBtn.textContent = inFs ? '⊠' : '⛶';
+  })
+);
 
 // ─── Keyboard ──────────────────────────────────────
 document.addEventListener('keydown', e => {
