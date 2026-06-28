@@ -571,9 +571,12 @@ let strokes    = [];
 let curStroke  = null;
 let activePid  = null;
 
+let _rect = null;
+window.addEventListener('resize', () => { _rect = null; });
+
 function ptFromEvent(e) {
-  const r = canvas.getBoundingClientRect();
-  return { x: e.clientX - r.left, y: e.clientY - r.top, pr: e.pressure > 0 ? e.pressure : 0.5 };
+  if (!_rect) _rect = canvas.getBoundingClientRect();
+  return { x: e.clientX - _rect.left, y: e.clientY - _rect.top, pr: e.pressure > 0 ? e.pressure : 0.5 };
 }
 
 function drawStroke(cx, stroke) {
@@ -625,6 +628,12 @@ function compositeToMain() {
 function renderPen() {
   compositeToMain();
   if (curStroke) drawStroke(ctx, curStroke);
+}
+
+let penRaf = null;
+function penFrame() {
+  renderPen();
+  penRaf = curStroke ? requestAnimationFrame(penFrame) : null;
 }
 
 // ─── Laser pointer ─────────────────────────────────
@@ -715,7 +724,7 @@ canvas.addEventListener('pointermove', e => {
 
   if (mode === 'pen' && curStroke && e.pointerId === activePid) {
     curStroke.pts.push(ptFromEvent(e));
-    renderPen();
+    if (!penRaf) penRaf = requestAnimationFrame(penFrame);
   } else if (mode === 'laser' && e.pointerId === activePid) {
     laserCurPts.push(ptFromEvent(e));
   }
@@ -742,6 +751,10 @@ canvas.addEventListener('pointerup', e => {
 
 canvas.addEventListener('pointercancel', e => {
   if (e.pointerType === 'pen') penDown = false;
+  if (mode === 'pen' && curStroke) {
+    strokes.push(curStroke);
+    drawStroke(inkCtx, curStroke);
+  }
   if (mode === 'laser' && laserCurPts.length) {
     laserStrokes.push({ pts: laserCurPts, color: laserColor, size: Math.max(curSize, 4), born: performance.now() });
   }
